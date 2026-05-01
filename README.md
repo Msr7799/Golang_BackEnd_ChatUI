@@ -1,48 +1,167 @@
 # Chat UI Go Backend
-![alt text](<Chat ui-1.png>)
-باك إند آمن لتطبيق Android Chat UI. التطبيق يرسل Firebase ID token إلى هذا السيرفر، والسيرفر وحده يضيف `HF_API_KEY` عند الاتصال بـ Hugging Face Router.
 
-## Endpoints
+<p align="center">
+  <img src="./Chat-ui.png" alt="Chat UI Poster" width="100%" />
+</p>
 
-- `GET /healthz` عام بدون توكن. يوجد alias عام أيضًا: `GET /healthz/` و`GET /v1/healthz`.
-  - في Cloud Run الحالي تم التحقق من `GET /healthz/` و`GET /v1/healthz` بنجاح.
-- `GET /v1/models` يحتاج `Authorization: Bearer <Firebase ID token>`.
-- `POST /v1/chat` يحتاج Firebase token ويرجع JSON من Hugging Face.
-- `POST /v1/chat/stream` يحتاج Firebase token ويمرر SSE stream مع flush لكل chunk.
-- `POST /v1/chat/with-file` يحتاج Firebase token ويستقبل PDF عبر `multipart/form-data` ثم يستخرج النص في السيرفر.
-- `GET|POST /v1/google/*` يمرر Google AI Studio مع مفتاح السيرفر.
-- `POST /v1/mcp/tavily` يمرر Tavily MCP مع مفتاح السيرفر عبر `Authorization` header وليس query string.
-- `POST /v1/cloudinary/upload` يرفع الصور والفيديوهات فقط إلى Cloudinary من السيرفر.
+<p align="center">
+  <b>A modern Android AI chat application built with Kotlin, Jetpack Compose, Firebase, Cloudinary, and a secure Go backend.</b>
+</p>
 
-## Environment
+<p align="center">
+  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
+  <img src="https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
+  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white" alt="Cloudinary" />
+  <img src="https://img.shields.io/badge/Google%20Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Google Cloud" />
+  <img src="https://img.shields.io/badge/Go%20Backend-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Backend" />
+  <img src="https://img.shields.io/badge/GitHub-Black%20Cat-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Black Cat" />
+</p>
 
-انسخ `.env.example` إلى `.env` محليًا وضع القيم:
+---
 
-```bash
-HF_API_KEY=hf_...
-FIREBASE_PROJECT_ID=your-firebase-project-id
-GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/service-account.json
-PORT=8080
+## Overview
+
+**Chat UI** is a professional Android AI chat application designed for clean conversations, secure authentication, cloud media handling, and server-side AI routing.
+
+The application is built with **Kotlin** and **Jetpack Compose** for a modern native Android experience. It integrates with **Firebase** for authentication and user data, **Cloudinary** for media uploads, and a secure **Go backend** deployed on cloud infrastructure.
+
+The main goal of this project is to keep sensitive API keys away from the Android APK. The Android app authenticates users with Firebase, then communicates with the backend using a Firebase ID token. The backend securely handles AI providers, Cloudinary uploads, Tavily MCP, and Google AI Studio requests.
+
+---
+
+## Features
+
+- Modern Android UI built with **Jetpack Compose**
+- Secure Firebase Authentication
+- AI chat support through a protected backend
+- Streaming chat response support
+- File-based chat support for PDF analysis
+- Cloudinary image and video upload support
+- Google AI Studio proxy support
+- Tavily MCP proxy support
+- Firebase usage tracking
+- Backend-side API key protection
+- Cloud-ready deployment with Google Cloud Run or Render
+- Clean architecture suitable for production expansion
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Android Language | Kotlin |
+| UI Toolkit | Jetpack Compose |
+| Authentication | Firebase Auth |
+| Database / Usage Tracking | Firestore |
+| Media Storage | Cloudinary |
+| Backend | Go |
+| AI Router | Hugging Face Router |
+| Google AI | Google AI Studio / Gemini |
+| MCP Search | Tavily MCP |
+| Deployment | Google Cloud Run / Render |
+| Version Control | GitHub |
+
+---
+
+## Architecture
+
+```text
+Android App
+   |
+   | Firebase ID Token
+   v
+Go Backend API
+   |
+   |-- Hugging Face Router
+   |-- Google AI Studio
+   |-- Tavily MCP
+   |-- Cloudinary Upload
+   |-- Firestore Usage Tracking
 ```
 
-الأسرار المطلوبة فعليًا:
+The Android app does not call Hugging Face, Google AI Studio, Tavily, or Cloudinary secrets directly.
 
-- `HF_API_KEY`: مفتاح Hugging Face، يبقى في السيرفر فقط.
-- `GOOGLE_STUDIO_API_KEY`: مفتاح Google AI Studio/Gemini.
-- `TAVILY_API_KEY`: مفتاح Tavily المستخدم عبر MCP proxy.
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: أسرار الرفع إلى Cloudinary من السيرفر.
-- `MAX_PROMPT_CHARS`: حد طول المحادثة المرسلة للنموذج. القيمة `0` تعني بدون حد من الباك إند.
-- `MAX_UPLOAD_MB`: حد الرفع. الافتراضي `20` ميجابايت، ويفضل عدم رفعه إلا عند الحاجة.
-- `MAX_PDF_UPLOAD_MB`: حد PDF في `/v1/chat/with-file`. الافتراضي `20`.
-- `MAX_PDF_TEXT_CHARS`: أقصى عدد أحرف مستخرجة من PDF يتم إرسالها للنموذج. الافتراضي `60000`.
-- `ALLOWED_ORIGINS`: دومينات الويب المسموحة فقط. للأندرويد لا تحتاج `*` في الإنتاج.
-- `FIREBASE_PROJECT_ID`: رقم/اسم مشروع Firebase.
-- `GOOGLE_APPLICATION_CREDENTIALS`: ملف service account محليًا فقط. في Cloud Run استخدم Service Account بدل ملف.
+Instead, the app sends a Firebase ID token to the backend:
 
-## Local Run
+```http
+Authorization: Bearer <Firebase ID Token>
+```
+
+The backend validates the user and safely attaches the required server-side API keys.
+
+---
+
+## Backend API
+
+The project uses a secure Go backend with the following main endpoints:
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/healthz` | Public health check |
+| `GET` | `/v1/models` | Get available AI models |
+| `POST` | `/v1/chat` | Send normal chat request |
+| `POST` | `/v1/chat/stream` | Send streaming chat request |
+| `POST` | `/v1/chat/with-file` | Upload and analyze PDF file |
+| `GET` / `POST` | `/v1/google/*` | Proxy Google AI Studio requests |
+| `POST` | `/v1/mcp/tavily` | Proxy Tavily MCP requests |
+| `POST` | `/v1/cloudinary/upload` | Upload image/video to Cloudinary |
+
+---
+
+## Security Model
+
+This project is designed to avoid exposing sensitive API keys inside the Android application.
+
+Protected secrets stay only on the backend:
+
+```env
+HF_API_KEY=
+GOOGLE_STUDIO_API_KEY=
+TAVILY_API_KEY=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+FIREBASE_PROJECT_ID=
+```
+
+The APK should never contain:
+
+- Hugging Face API keys
+- Google AI Studio keys
+- Tavily API keys
+- Cloudinary API secrets
+- Service account JSON files
+
+---
+
+## Android Configuration
+
+For local emulator testing, use:
+
+```env
+BACKEND_BASE_URL=http://10.0.2.2:8080/v1
+```
+
+For production, use your deployed backend URL:
+
+```env
+BACKEND_BASE_URL=https://your-backend.example.com/v1
+```
+
+The Android client should send requests with:
+
+```http
+Authorization: Bearer <Firebase ID Token>
+```
+
+---
+
+## Local Backend Run
 
 ```bash
-cd GO_BACKEND
 cp .env.example .env
 set -a
 source .env
@@ -50,141 +169,135 @@ set +a
 go run ./cmd/server
 ```
 
-اختبار الصحة:
+Health check:
 
 ```bash
 curl http://localhost:8080/healthz
 ```
 
-مثال طلب شات:
-
-```bash
-curl -X POST http://localhost:8080/v1/chat \
-  -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-    "messages": [{"role": "user", "content": "مرحبا"}],
-    "temperature": 0.7,
-    "max_tokens": 1024
-  }'
-```
-
-مثال stream:
-
-```bash
-curl -N -X POST http://localhost:8080/v1/chat/stream \
-  -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-    "messages": [{"role": "user", "content": "اكتب فقرة قصيرة"}]
-  }'
-```
-
-مثال PDF multipart بدون Base64:
-
-```bash
-curl -X POST http://localhost:8080/v1/chat/with-file \
-  -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \
-  -F "model=Qwen/Qwen3-235B-A22B-Instruct-2507" \
-  -F "message=حلل هذا الملف" \
-  -F "file=@/path/to/file.pdf;type=application/pdf"
-```
-
-## Firestore Usage
-
-يسجل الاستخدام في:
-
-```text
-users/{uid}/usage/summary
-```
-
-الحقول:
-
-- `totalRequests`
-- `lastRequestAt`
-- `dailyCount`
-- `dailyDate`
-- `modelUsage`
-
-استخدمت `summary` لأن Firestore يحتاج document ID بعد collection، بينما `users/{uid}/usage` وحدها تكون collection path.
+---
 
 ## Docker
 
 ```bash
-cd GO_BACKEND
 docker build -t chat-ui-go-backend .
 docker run --rm -p 8080:8080 --env-file .env chat-ui-go-backend
 ```
 
-## Deploy على Render
+---
 
-1. أنشئ Web Service من الريبو.
-2. Root Directory: `GO_BACKEND`.
-3. Runtime: Docker.
-4. أضف env vars:
-   - `HF_API_KEY`
-   - `GOOGLE_STUDIO_API_KEY`
-   - `TAVILY_API_KEY`
-   - `CLOUDINARY_CLOUD_NAME`
-   - `CLOUDINARY_API_KEY`
-   - `CLOUDINARY_API_SECRET`
-   - `FIREBASE_PROJECT_ID`
-   - `ALLOWED_ORIGINS`
-   - `MAX_PROMPT_CHARS`
-   - `RATE_LIMIT_PER_MINUTE`
-5. أضف service account عبر Secret File أو استخدم طريقة Render المتاحة للـGoogle credentials، ثم عيّن `GOOGLE_APPLICATION_CREDENTIALS`.
+## Build Android Release
 
-## Deploy على Cloud Run
+To generate a release APK:
 
 ```bash
-cd GO_BACKEND
+./gradlew clean :app:assembleRelease
+```
+
+To generate a release Android App Bundle:
+
+```bash
+./gradlew clean :app:bundleRelease
+```
+
+Release outputs:
+
+```text
+app/build/outputs/apk/release/
+app/build/outputs/bundle/release/
+```
+
+---
+
+## Cloud Deployment
+
+The backend can be deployed to:
+
+- Google Cloud Run
+- Render
+- Any Docker-compatible server
+
+Example Google Cloud Run deployment:
+
+```bash
 gcloud run deploy chat-ui-go-backend \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars FIREBASE_PROJECT_ID=your-project-id,ALLOWED_ORIGINS='https://your-web-domain.example',MAX_UPLOAD_MB=20 \
-  --set-secrets HF_API_KEY=HF_API_KEY:latest,GOOGLE_STUDIO_API_KEY=GOOGLE_STUDIO_API_KEY:latest,TAVILY_API_KEY=TAVILY_API_KEY:latest,CLOUDINARY_API_SECRET=CLOUDINARY_API_SECRET:latest
+  --set-env-vars FIREBASE_PROJECT_ID=your-project-id,ALLOWED_ORIGINS='https://your-domain.example'
 ```
 
-الأفضل أن تعطي Cloud Run service account صلاحيات Firebase Auth/Firestore المناسبة، ولا ترفع service account JSON داخل الصورة.
+Use Secret Manager or platform environment variables for API keys.
 
-ملاحظات أمان:
+---
 
-- لا تضع `ALLOWED_ORIGINS=*` في الإنتاج إلا لو كان عندك سبب مؤقت واضح.
-- مسار Tavily يزيل `tavilyApiKey` من URL ويضيف المفتاح في `Authorization: Bearer ...`.
-- مسار Cloudinary يمنع `raw` ويقبل `image/*` و`video/*` فقط مع تحقق MIME.
+## Project Highlights
 
-## Android Integration
+- Production-focused backend security
+- Clean Android user experience
+- Firebase-based identity verification
+- Cloudinary-based media upload pipeline
+- Streaming AI response support
+- Expandable backend design
+- Suitable foundation for a real AI assistant app
 
-تطبيق Android لا يرسل إلى Hugging Face مباشرة. اجعل إعداد Hugging Face base URL يشير إلى:
+---
 
-```text
-http://10.0.2.2:8080/v1
-```
+## Screenshots
 
-على جهاز حقيقي استخدم رابط السيرفر المنشور، مثل:
+Add more screenshots here:
 
-```text
-https://your-service.onrender.com/v1
-```
+![Screenshot 1](./screenshots/screenshot-1.png)
+![Screenshot 2](./screenshots/screenshot-2.png)
+![Screenshot 3](./screenshots/screenshot-3.png)
 
-العميل يجلب Firebase ID token من Firebase Auth ثم يرسل:
+---
 
-```text
-Authorization: Bearer <Firebase ID token>
-```
+## Roadmap
 
-بهذا لا يوجد `HF_API_KEY` داخل APK أو داخل إعدادات تطبيق Android.
+- [ ] Improve chat message animations
+- [ ] Add conversation history sync
+- [ ] Add model selector UI
+- [ ] Add image message support
+- [ ] Add voice input support
+- [ ] Add markdown rendering
+- [ ] Add user settings screen
+- [ ] Add advanced file analysis
+- [ ] Add rate-limit dashboard
+- [ ] Add admin monitoring tools
 
-كذلك اجعل الخدمات الثانية تشير للباك إند:
+---
 
-```properties
-GOOGLE_AI_STUDIO_BASE_URL=https://your-backend.example.com/v1/google
-TAVILY_MCP_URL=https://your-backend.example.com/v1/mcp/tavily
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-```
+## Repository
 
-العميل يرسل Firebase token فقط، والباك إند يضيف مفاتيح Google/Tavily/Cloudinary.
+<p align="center">
+  <a href="https://github.com/Msr7799/chat-ui-kotlin">
+    <img src="https://img.shields.io/badge/GitHub-Msr7799%2Fchat--ui--kotlin-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" />
+  </a>
+</p>
+
+---
+
+## Author
+
+**Mohamed Alromaihi**
+
+GitHub: [@Msr7799](https://github.com/Msr7799)
+
+---
+
+## License
+
+This project is currently private or under active development.
+
+Add your license here when ready:
+
+- MIT License
+- Apache License 2.0
+- Proprietary License
+
+---
+
+<p align="center">
+  <b>Chat UI - Secure, modern, and cloud-ready AI chat for Android.</b>
+</p>
